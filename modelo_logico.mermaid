@@ -1,0 +1,109 @@
+erDiagram
+    USUARIO {
+        int id_usuario PK
+        string nombre
+        string apellido
+        string rol
+    }
+
+    TIPO_ELEMENTO {
+        int id_tipo PK
+        string nombre
+    }
+
+    SISTEMA_ARMAS {
+        int id_sist_armas PK
+        string codigo
+        string modelo
+    }
+
+    CATALOGO_MATERIAL {
+        string NNE PK
+        string NREF
+        string designacion
+        string ATA
+        int id_tipo_elemento FK
+        int id_usuario FK
+    }
+
+    MATERIAL_SIST_ARMAS {
+        int id_sist_armas PK, FK
+        string NNE PK, FK
+    }
+
+    UBICACION {
+        int id_ubicacion PK
+        string deposito
+        string sector
+        string mapa_highlight
+    }
+
+    INVENTARIO_FISICO {
+        int id_item PK
+        string NNE FK
+        string n_serie
+        date vencimiento
+        string observaciones
+        string tamano
+        int id_ubicacion FK
+    }
+
+    ESTADO_ELEMENTO {
+        int id_estado PK
+        string codigo
+        string descripcion
+    }
+
+    TARJETA {
+        int id_tarjeta PK
+        int id_item FK
+        int id_estado FK
+        string codigo_trazabilidad
+        string nro_tarjeta
+        string ot
+        date fecha_emision
+        string causas
+        string inspector
+        bit activa
+    }
+
+    MOTIVO_SALIDA {
+        int id_motivo PK
+        string codigo
+        string descripcion
+    }
+
+    SALIDA {
+        int id_salida PK
+        int id_item FK
+        int id_motivo FK
+        string destino
+        datetime fecha_salida
+        date fecha_prevista_retorno
+        datetime fecha_retorno
+        string retirado_por
+        string observaciones
+    }
+
+    MOVIMIENTO_INVENTARIO {
+        int id_movimiento PK
+        int id_item FK
+        int id_ubicacion FK
+        datetime fecha_registro
+        string accion
+        string usuario
+        string detalle
+    }
+
+    TIPO_ELEMENTO ||--o{ CATALOGO_MATERIAL : clasifica
+    USUARIO |o--o{ CATALOGO_MATERIAL : consulta
+    SISTEMA_ARMAS ||--o{ MATERIAL_SIST_ARMAS : utiliza
+    CATALOGO_MATERIAL ||--o{ MATERIAL_SIST_ARMAS : compatible
+    CATALOGO_MATERIAL ||--o{ INVENTARIO_FISICO : instancia
+    UBICACION |o--o{ INVENTARIO_FISICO : almacena
+    INVENTARIO_FISICO ||--o{ TARJETA : "lleva atada"
+    ESTADO_ELEMENTO ||--o{ TARJETA : condiciona
+    INVENTARIO_FISICO ||--o{ MOVIMIENTO_INVENTARIO : afecta
+    UBICACION ||--o{ MOVIMIENTO_INVENTARIO : registra
+    INVENTARIO_FISICO ||--o{ SALIDA : "se retira en"
+    MOTIVO_SALIDA ||--o{ SALIDA : justifica
