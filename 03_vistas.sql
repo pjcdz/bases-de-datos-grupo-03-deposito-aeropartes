@@ -1,5 +1,6 @@
 /* ============================================================================
-   ARCHIVO 03 de 05 — VISTAS
+hola   
+ARCHIVO 03 de 05 — VISTAS
    Requiere haber ejecutado 01 y 02 (las vistas usan funciones del archivo 02).
 
    Tema de la materia: Vistas (tablas virtuales), JOINs, abstracción de consultas.
