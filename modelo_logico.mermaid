@@ -91,12 +91,12 @@ erDiagram
         int id_ubicacion FK
         datetime fecha_registro
         string accion
-        string usuario
+        int id_usuario_registra FK
         string detalle
     }
 
     TIPO_ELEMENTO ||--o{ CATALOGO_MATERIAL : clasifica
-    USUARIO |o--o{ CATALOGO_MATERIAL : consulta
+    USUARIO |o--o{ CATALOGO_MATERIAL : carga
     SISTEMA_ARMAS ||--o{ MATERIAL_SIST_ARMAS : utiliza
     CATALOGO_MATERIAL ||--o{ MATERIAL_SIST_ARMAS : compatible
     CATALOGO_MATERIAL ||--o{ INVENTARIO_FISICO : instancia
@@ -104,6 +104,7 @@ erDiagram
     INVENTARIO_FISICO ||--o{ TARJETA : "lleva atada"
     ESTADO_ELEMENTO ||--o{ TARJETA : condiciona
     INVENTARIO_FISICO ||--o{ MOVIMIENTO_INVENTARIO : afecta
-    UBICACION ||--o{ MOVIMIENTO_INVENTARIO : registra
+    UBICACION |o--o{ MOVIMIENTO_INVENTARIO : registra
+    USUARIO |o--o{ MOVIMIENTO_INVENTARIO : registra
     INVENTARIO_FISICO ||--o{ SALIDA : "se retira en"
     MOTIVO_SALIDA ||--o{ SALIDA : justifica
