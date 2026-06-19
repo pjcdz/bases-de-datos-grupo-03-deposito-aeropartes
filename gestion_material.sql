@@ -1,42 +1,48 @@
 /* ============================================================================
-   Sistema de Gestión de Material — Microsoft SQL Server (T-SQL)
-   ARCHIVO 01 de 05 — ESQUEMA (DDL): tablas, restricciones, índices y semilla.
+   Sistema de Gestion de Material — Microsoft SQL Server (T-SQL)
+   ARCHIVO 01 de 06 — ESQUEMA (DDL): tablas, restricciones, indices y semilla.
 
-   Orden de ejecución del proyecto:
+   Convencion de escritura (estilo de catedra):
+     - Tablas en PascalCase y plural (Usuarios, Salidas...).
+     - PK surrogate INT IDENTITY(1,1) PRIMARY KEY en linea; PK natural (NNE) tambien.
+     - Columnas con sufijo de entidad (NombreUsuario, FechaSalida...).
+     - NVARCHAR para texto libre; VARCHAR/CHAR para codigos y documentos.
+     - Restricciones nombradas: PK_/FK_/UQ_/CHK_.
+     - Se comenta cada bloque indicando la consigna que cumple.
+
+   Orden de ejecucion del proyecto:
      01) gestion_material.sql              <- ESTE archivo (esquema + semilla)
      02) 02_programabilidad.sql            funciones, triggers, procedimientos, cursor
-     03) 03_vistas.sql                     vistas
-     04) 04_datos_ejemplo.sql              datos de prueba (usa los procedimientos)
-     05) 05_consultas_demostracion.sql     consultas de demostración (SQL avanzado)
+     03) 03_crud.sql                       procedimientos CRUD por tabla
+     04) 04_vistas.sql                     vistas
+     05) 05_datos_ejemplo.sql              datos de prueba (usa los procedimientos)
+     06) 06_consultas_demostracion.sql     consultas de demostracion (SQL avanzado)
 
    Decisiones de modelo aplicadas (ver DECISIONES_EQUIPO.md):
-     - P1-C: el usuario que REGISTRA un movimiento es FK a usuario
-             (movimiento_inventario.id_usuario_registra). El inspector de la
-             tarjeta y quien retira en una salida quedan como texto (firman en
-             papel, no son cuentas del sistema).
-     - P2-A: la relación usuario→catalogo se interpreta como "registra/carga"
-             (quién dio de alta la ficha), no como "consulta".
-     - P3-A: Nº de parte y Nº de serie NO se duplican en la tarjeta: se derivan
-             del elemento (n_serie) y del catálogo (NREF/NNE). Normalización.
-     - P4-A: movimiento_inventario.id_ubicacion pasa a ser NULL-able
-             (NULL = el movimiento ocurrió con el elemento fuera del depósito).
-     - P13-A: se agregan CHECK (coherencia de fechas) y políticas ON DELETE.
+     - P1-C: el usuario que REGISTRA un movimiento es FK a Usuarios
+             (MovimientosInventario.IdUsuarioRegistra). El inspector de la tarjeta
+             y quien retira en una salida quedan como texto (firman en papel).
+     - P2-A: la relacion Usuarios->CatalogoMateriales se interpreta como "registra/carga".
+     - P3-A: Nro de parte y Nro de serie NO se duplican en la tarjeta: se derivan
+             del elemento (NumeroSerieItem) y del catalogo (NumeroReferenciaMaterial/NNE).
+     - P4-A: MovimientosInventario.IdUbicacion es NULL-able (NULL = fuera del deposito).
+     - P13-A: se agregan CHECK (coherencia de fechas) y politicas ON DELETE.
 
    Modelo de fondo:
-     - catalogo_material = ficha/modelo (NNE). inventario_fisico = ejemplar real.
-     - tarjeta atada al elemento; UNA activa a la vez; el resto es historial.
+     - CatalogoMateriales = ficha/modelo (NNE). InventarioFisico = ejemplar real.
+     - Tarjetas atadas al elemento; UNA activa a la vez; el resto es historial.
      - el ESTADO del elemento vive en su tarjeta activa.
-     - salida = retiro del depósito (préstamo/reparación/inspección/baja);
-       id_ubicacion del elemento en NULL = está afuera.
+     - Salidas = retiro del deposito (prestamo/reparacion/inspeccion/baja);
+       IdUbicacion del elemento en NULL = esta afuera.
    ============================================================================ */
 
 -- Descomentar si se quiere crear la base de datos:
--- CREATE DATABASE gestion_material;
+-- CREATE DATABASE GestionMaterial;
 -- GO
--- USE gestion_material;
+-- USE GestionMaterial;
 -- GO
 
--- Requerido para índices filtrados y para crear triggers/procedimientos.
+-- Requerido para indices filtrados y para crear triggers/procedimientos.
 SET ANSI_NULLS ON;
 SET QUOTED_IDENTIFIER ON;
 GO
@@ -46,7 +52,7 @@ GO
 DROP TRIGGER IF EXISTS trg_salida_abre_saca_del_deposito;
 DROP TRIGGER IF EXISTS trg_salida_baja_genera_tarjeta;
 DROP TRIGGER IF EXISTS trg_tarjeta_no_reactiva_baja;
-DROP TRIGGER IF EXISTS trg_tarjeta_no_borrar_historial;
+DROP TRIGGER IF EXISTS trg_estado_no_borrar;
 GO
 DROP VIEW IF EXISTS vw_elementos_afuera;
 DROP VIEW IF EXISTS vw_stock_disponible;
@@ -64,242 +70,235 @@ DROP FUNCTION IF EXISTS fn_EstadoActual;
 DROP FUNCTION IF EXISTS fn_DiasParaVencer;
 GO
 -- Tablas
-DROP TABLE IF EXISTS salida;
-DROP TABLE IF EXISTS movimiento_inventario;
-DROP TABLE IF EXISTS tarjeta;
-DROP TABLE IF EXISTS inventario_fisico;
-DROP TABLE IF EXISTS motivo_salida;
-DROP TABLE IF EXISTS material_sist_armas;
-DROP TABLE IF EXISTS catalogo_material;
-DROP TABLE IF EXISTS sistema_armas;
-DROP TABLE IF EXISTS tipo_elemento;
-DROP TABLE IF EXISTS estado_elemento;
-DROP TABLE IF EXISTS ubicacion;
-DROP TABLE IF EXISTS usuario;
+DROP TABLE IF EXISTS Salidas;
+DROP TABLE IF EXISTS MovimientosInventario;
+DROP TABLE IF EXISTS Tarjetas;
+DROP TABLE IF EXISTS InventarioFisico;
+DROP TABLE IF EXISTS MotivosSalida;
+DROP TABLE IF EXISTS MaterialesSistemasArmas;
+DROP TABLE IF EXISTS CatalogoMateriales;
+DROP TABLE IF EXISTS SistemasArmas;
+DROP TABLE IF EXISTS TiposElemento;
+DROP TABLE IF EXISTS EstadosElemento;
+DROP TABLE IF EXISTS Ubicaciones;
+DROP TABLE IF EXISTS Usuarios;
 GO
 
 /* ==================== Tablas maestras ==================== */
 
-CREATE TABLE usuario (
-    id_usuario  INT IDENTITY(1,1) NOT NULL,
-    nombre      NVARCHAR(100) NOT NULL,
-    apellido    NVARCHAR(100) NOT NULL,
-    rol         NVARCHAR(50)  NOT NULL,
-    CONSTRAINT PK_usuario PRIMARY KEY (id_usuario)
+-- 1. Usuarios: operarios del sistema (cargan fichas, registran movimientos).
+CREATE TABLE Usuarios (
+    IdUsuario       INT IDENTITY(1,1) PRIMARY KEY,
+    NombreUsuario   NVARCHAR(100) NOT NULL,
+    ApellidoUsuario NVARCHAR(100) NOT NULL,
+    RolUsuario      NVARCHAR(50)  NOT NULL
 );
 GO
 
-CREATE TABLE tipo_elemento (
-    id_tipo  INT IDENTITY(1,1) NOT NULL,
-    nombre   NVARCHAR(100) NOT NULL,
-    CONSTRAINT PK_tipo_elemento PRIMARY KEY (id_tipo),
-    CONSTRAINT UQ_tipo_elemento_nombre UNIQUE (nombre)
+-- 2. TiposElemento: clasificacion del material (rotable, herramienta, etc.).
+CREATE TABLE TiposElemento (
+    IdTipoElemento     INT IDENTITY(1,1) PRIMARY KEY,
+    NombreTipoElemento NVARCHAR(100) NOT NULL,
+    CONSTRAINT UQ_TiposElemento_Nombre UNIQUE (NombreTipoElemento) -- nombre de tipo unico
 );
 GO
 
-CREATE TABLE sistema_armas (
-    id_sist_armas  INT IDENTITY(1,1) NOT NULL,
-    codigo         NVARCHAR(50)  NOT NULL,
-    modelo         NVARCHAR(100) NOT NULL,
-    CONSTRAINT PK_sistema_armas PRIMARY KEY (id_sist_armas),
-    CONSTRAINT UQ_sistema_armas_codigo UNIQUE (codigo)
+-- 3. SistemasArmas: aeronaves / sistemas a los que sirve el material.
+CREATE TABLE SistemasArmas (
+    IdSistemaArmas     INT IDENTITY(1,1) PRIMARY KEY,
+    CodigoSistemaArmas VARCHAR(50)   NOT NULL,  -- codigo -> VARCHAR
+    ModeloSistemaArmas NVARCHAR(100) NOT NULL,
+    CONSTRAINT UQ_SistemasArmas_Codigo UNIQUE (CodigoSistemaArmas)
 );
 GO
 
-CREATE TABLE estado_elemento (
-    id_estado    INT IDENTITY(1,1) NOT NULL,
-    codigo       NVARCHAR(30)  NOT NULL,
-    descripcion  NVARCHAR(255) NULL,
-    CONSTRAINT PK_estado_elemento PRIMARY KEY (id_estado),
-    CONSTRAINT UQ_estado_elemento_codigo UNIQUE (codigo),
-    CONSTRAINT CK_estado_codigo CHECK (LEN(codigo) > 0)
+-- 4. EstadosElemento: catalogo de estados de la tarjeta (semilla fija).
+CREATE TABLE EstadosElemento (
+    IdEstadoElemento          INT IDENTITY(1,1) PRIMARY KEY,
+    CodigoEstadoElemento      VARCHAR(30)   NOT NULL,
+    DescripcionEstadoElemento NVARCHAR(255) NULL,
+    CONSTRAINT UQ_EstadosElemento_Codigo UNIQUE (CodigoEstadoElemento),
+    CONSTRAINT CHK_EstadosElemento_Codigo CHECK (LEN(CodigoEstadoElemento) > 0) -- dominio: no vacio
 );
 GO
 
-CREATE TABLE ubicacion (
-    id_ubicacion    INT IDENTITY(1,1) NOT NULL,
-    deposito        NVARCHAR(100) NOT NULL,
-    sector          NVARCHAR(100) NULL,
-    mapa_highlight  NVARCHAR(255) NULL,
-    CONSTRAINT PK_ubicacion PRIMARY KEY (id_ubicacion)
+-- 5. Ubicaciones: lugares fisicos de almacenamiento dentro del deposito.
+CREATE TABLE Ubicaciones (
+    IdUbicacion            INT IDENTITY(1,1) PRIMARY KEY,
+    DepositoUbicacion      NVARCHAR(100) NOT NULL,
+    SectorUbicacion        NVARCHAR(100) NULL,
+    MapaHighlightUbicacion NVARCHAR(255) NULL
 );
 GO
 
-CREATE TABLE motivo_salida (
-    id_motivo    INT IDENTITY(1,1) NOT NULL,
-    codigo       NVARCHAR(30)  NOT NULL,
-    descripcion  NVARCHAR(255) NULL,
-    CONSTRAINT PK_motivo_salida PRIMARY KEY (id_motivo),
-    CONSTRAINT UQ_motivo_salida_codigo UNIQUE (codigo),
-    CONSTRAINT CK_motivo_codigo CHECK (LEN(codigo) > 0)
+-- 6. MotivosSalida: catalogo de motivos de retiro del deposito (semilla fija).
+CREATE TABLE MotivosSalida (
+    IdMotivoSalida          INT IDENTITY(1,1) PRIMARY KEY,
+    CodigoMotivoSalida      VARCHAR(30)   NOT NULL,
+    DescripcionMotivoSalida NVARCHAR(255) NULL,
+    CONSTRAINT UQ_MotivosSalida_Codigo UNIQUE (CodigoMotivoSalida),
+    CONSTRAINT CHK_MotivosSalida_Codigo CHECK (LEN(CodigoMotivoSalida) > 0)
 );
 GO
 
-/* ==================== Catálogo ==================== */
+/* ==================== Catalogo ==================== */
 
-CREATE TABLE catalogo_material (
-    NNE               NVARCHAR(20)  NOT NULL,   -- Número Nacional de Efecto (PK natural)
-    NREF              NVARCHAR(50)  NULL,        -- Nº de referencia / parte (se DERIVA hacia la tarjeta)
-    designacion       NVARCHAR(255) NOT NULL,
-    ATA               NVARCHAR(10)  NULL,
-    id_tipo_elemento  INT NOT NULL,             -- "clasifica": tipo_elemento (1) ── (N) catalogo
-    id_usuario        INT NULL,                 -- "registra": usuario (1) ── (N) catalogo (quién cargó la ficha)
-    CONSTRAINT PK_catalogo_material PRIMARY KEY (NNE),
-    CONSTRAINT FK_catalogo_tipo
-        FOREIGN KEY (id_tipo_elemento) REFERENCES tipo_elemento (id_tipo),
-    CONSTRAINT FK_catalogo_usuario
-        FOREIGN KEY (id_usuario) REFERENCES usuario (id_usuario)
-        ON DELETE SET NULL                       -- si se borra el usuario, la ficha queda sin "cargado por"
+-- 7. CatalogoMateriales: ficha/modelo del material (que es), PK natural NNE.
+CREATE TABLE CatalogoMateriales (
+    NNE                      NVARCHAR(20)  NOT NULL PRIMARY KEY, -- Numero Nacional de Efecto (clave natural)
+    NumeroReferenciaMaterial VARCHAR(50)   NULL,                 -- Nro de referencia / parte (codigo)
+    DesignacionMaterial      NVARCHAR(255) NOT NULL,
+    ATAMaterial              VARCHAR(10)   NULL,                 -- capitulo ATA (codigo)
+    IdTipoElemento           INT NOT NULL,                       -- "clasifica": TiposElemento (1)-(N) Catalogo
+    IdUsuario                INT NULL,                           -- "registra": Usuarios (1)-(N) Catalogo
+    CONSTRAINT FK_CatalogoMateriales_TiposElemento
+        FOREIGN KEY (IdTipoElemento) REFERENCES TiposElemento (IdTipoElemento),
+    CONSTRAINT FK_CatalogoMateriales_Usuarios
+        FOREIGN KEY (IdUsuario) REFERENCES Usuarios (IdUsuario)
+        ON DELETE SET NULL                                       -- si se borra el usuario, la ficha queda sin "cargado por"
 );
 GO
 
-/* "utiliza/compatible": sistema_armas (N) ── (N) catalogo_material → tabla intermedia.
-   PK compuesta: ejemplo de clave compuesta sin dependencias parciales (2FN). */
-CREATE TABLE material_sist_armas (
-    id_sist_armas  INT          NOT NULL,
+-- 8. MaterialesSistemasArmas: relacion N:N material-sistema (compatibilidad).
+--    PK compuesta = relacion todo-clave, sin dependencias parciales (2FN).
+CREATE TABLE MaterialesSistemasArmas (
+    IdSistemaArmas INT          NOT NULL,
     NNE            NVARCHAR(20) NOT NULL,
-    CONSTRAINT PK_material_sist_armas PRIMARY KEY (id_sist_armas, NNE),
-    CONSTRAINT FK_msa_sistema
-        FOREIGN KEY (id_sist_armas) REFERENCES sistema_armas (id_sist_armas)
+    CONSTRAINT PK_MaterialesSistemasArmas PRIMARY KEY (IdSistemaArmas, NNE),
+    CONSTRAINT FK_MaterialesSistemasArmas_SistemasArmas
+        FOREIGN KEY (IdSistemaArmas) REFERENCES SistemasArmas (IdSistemaArmas)
         ON DELETE CASCADE,
-    CONSTRAINT FK_msa_catalogo
-        FOREIGN KEY (NNE) REFERENCES catalogo_material (NNE)
+    CONSTRAINT FK_MaterialesSistemasArmas_CatalogoMateriales
+        FOREIGN KEY (NNE) REFERENCES CatalogoMateriales (NNE)
         ON DELETE CASCADE
 );
 GO
 
 /* ==================== Inventario ==================== */
 
-CREATE TABLE inventario_fisico (
-    id_item        INT IDENTITY(1,1) NOT NULL,
-    NNE            NVARCHAR(20)  NOT NULL,      -- "instancia": catalogo (1) ── (N) inventario
-    n_serie        NVARCHAR(100) NULL,
-    vencimiento    DATE          NULL,
-    observaciones  NVARCHAR(500) NULL,
-    [tamaño]       NVARCHAR(50)  NULL,
-    id_ubicacion   INT NULL,                    -- "almacena"; NULL = fuera del depósito
-    CONSTRAINT PK_inventario_fisico PRIMARY KEY (id_item),
-    CONSTRAINT FK_inventario_catalogo
-        FOREIGN KEY (NNE) REFERENCES catalogo_material (NNE),
-    CONSTRAINT FK_inventario_ubicacion
-        FOREIGN KEY (id_ubicacion) REFERENCES ubicacion (id_ubicacion)
-        ON DELETE SET NULL                       -- si se borra una ubicación, el elemento queda "sin ubicar"
+-- 9. InventarioFisico: cada ejemplar fisico real de un material del catalogo.
+CREATE TABLE InventarioFisico (
+    IdItem               INT IDENTITY(1,1) PRIMARY KEY,
+    NNE                  NVARCHAR(20)  NOT NULL,   -- "instancia": Catalogo (1)-(N) Inventario
+    NumeroSerieItem      VARCHAR(100)  NULL,       -- numero de serie (codigo)
+    FechaVencimientoItem DATE          NULL,
+    ObservacionesItem    NVARCHAR(500) NULL,
+    TamanoItem           NVARCHAR(50)  NULL,
+    IdUbicacion          INT           NULL,       -- "almacena"; NULL = fuera del deposito
+    CONSTRAINT FK_InventarioFisico_CatalogoMateriales
+        FOREIGN KEY (NNE) REFERENCES CatalogoMateriales (NNE),
+    CONSTRAINT FK_InventarioFisico_Ubicaciones
+        FOREIGN KEY (IdUbicacion) REFERENCES Ubicaciones (IdUbicacion)
+        ON DELETE SET NULL                          -- si se borra una ubicacion, el elemento queda "sin ubicar"
 );
 GO
 
-/* Tarjeta física atada al elemento. El estado del elemento es el estado de su
-   tarjeta activa. Nº de parte y Nº de serie se DERIVAN del elemento/catálogo. */
-CREATE TABLE tarjeta (
-    id_tarjeta           INT IDENTITY(1,1) NOT NULL,
-    id_item              INT NOT NULL,            -- elemento al que está atada
-    id_estado            INT NOT NULL,            -- estado de la tarjeta (verde/blanca/baja)
-    codigo_trazabilidad  NVARCHAR(50)  NULL,
-    nro_tarjeta          NVARCHAR(30)  NULL,      -- Nº impreso en la tarjeta física
-    ot                   NVARCHAR(30)  NULL,      -- orden de trabajo
-    fecha_emision        DATE NOT NULL
-        CONSTRAINT DF_tarjeta_fecha DEFAULT CAST(SYSDATETIME() AS DATE),
-    causas               NVARCHAR(500) NULL,      -- causas de rechazo / remoción
-    inspector            NVARCHAR(100) NULL,      -- firma y aclaración (persona física, texto)
-    activa               BIT NOT NULL
-        CONSTRAINT DF_tarjeta_activa DEFAULT 1,
-    CONSTRAINT PK_tarjeta PRIMARY KEY (id_tarjeta),
-    CONSTRAINT FK_tarjeta_item
-        FOREIGN KEY (id_item) REFERENCES inventario_fisico (id_item)
-        ON DELETE CASCADE,                        -- si se borra el elemento, se va su historial de tarjetas
-    CONSTRAINT FK_tarjeta_estado
-        FOREIGN KEY (id_estado) REFERENCES estado_elemento (id_estado)
+-- 10. Tarjetas: tarjeta fisica atada al elemento. El estado del elemento es el
+--     estado de su tarjeta activa. Nro de parte/serie se DERIVAN (no se duplican).
+CREATE TABLE Tarjetas (
+    IdTarjeta                 INT IDENTITY(1,1) PRIMARY KEY,
+    IdItem                    INT NOT NULL,            -- elemento al que esta atada
+    IdEstadoElemento          INT NOT NULL,            -- estado de la tarjeta (verde/blanca/baja)
+    CodigoTrazabilidadTarjeta VARCHAR(50)   NULL,
+    NumeroTarjeta             VARCHAR(30)   NULL,      -- Nro impreso en la tarjeta fisica
+    OrdenTrabajoTarjeta       VARCHAR(30)   NULL,      -- orden de trabajo
+    FechaEmisionTarjeta       DATE NOT NULL DEFAULT CAST(SYSDATETIME() AS DATE),
+    CausasTarjeta             NVARCHAR(500) NULL,      -- causas de rechazo / remocion
+    InspectorTarjeta          NVARCHAR(100) NULL,      -- firma y aclaracion (persona fisica, texto)
+    ActivaTarjeta             BIT NOT NULL DEFAULT 1,
+    CONSTRAINT FK_Tarjetas_InventarioFisico
+        FOREIGN KEY (IdItem) REFERENCES InventarioFisico (IdItem)
+        ON DELETE CASCADE,                             -- si se borra el elemento, se va su historial de tarjetas
+    CONSTRAINT FK_Tarjetas_EstadosElemento
+        FOREIGN KEY (IdEstadoElemento) REFERENCES EstadosElemento (IdEstadoElemento)
 );
 GO
 
-/* Una sola tarjeta activa por elemento; las demás quedan como historial.
-   Esta es la garantía dura de integridad (no depende de la aplicación). */
-CREATE UNIQUE INDEX UQ_tarjeta_activa_por_item
-    ON tarjeta (id_item) WHERE activa = 1;
+-- Integridad dura: UNA sola tarjeta activa por elemento (indice unico filtrado).
+CREATE UNIQUE INDEX UQ_Tarjetas_ActivaPorItem
+    ON Tarjetas (IdItem) WHERE ActivaTarjeta = 1;
 GO
 
-CREATE TABLE movimiento_inventario (
-    id_movimiento        INT IDENTITY(1,1) NOT NULL,
-    id_item              INT NOT NULL,           -- "afecta": movimiento (N) ── (1) inventario
-    id_ubicacion         INT NULL,               -- "registra"; NULL = movimiento con el elemento afuera (P4-A)
-    fecha_registro       DATETIME2(0) NOT NULL
-        CONSTRAINT DF_movimiento_fecha DEFAULT SYSDATETIME(),
-    accion               NVARCHAR(50)  NOT NULL,
-    id_usuario_registra  INT NULL,               -- "registra": usuario (1) ── (N) movimiento (P1-C)
-    detalle              NVARCHAR(500) NULL,
-    CONSTRAINT PK_movimiento_inventario PRIMARY KEY (id_movimiento),
-    CONSTRAINT FK_movimiento_item
-        FOREIGN KEY (id_item) REFERENCES inventario_fisico (id_item)
+-- 11. MovimientosInventario: bitacora de trazabilidad de cada elemento.
+CREATE TABLE MovimientosInventario (
+    IdMovimiento            INT IDENTITY(1,1) PRIMARY KEY,
+    IdItem                  INT NOT NULL,           -- "afecta": Movimiento (N)-(1) Inventario
+    IdUbicacion             INT NULL,               -- "registra"; NULL = movimiento con el elemento afuera (P4-A)
+    FechaRegistroMovimiento DATETIME2(0) NOT NULL DEFAULT SYSDATETIME(),
+    AccionMovimiento        NVARCHAR(50)  NOT NULL,
+    IdUsuarioRegistra       INT NULL,               -- "registra": Usuarios (1)-(N) Movimiento (P1-C)
+    DetalleMovimiento       NVARCHAR(500) NULL,
+    CONSTRAINT FK_MovimientosInventario_InventarioFisico
+        FOREIGN KEY (IdItem) REFERENCES InventarioFisico (IdItem)
         ON DELETE CASCADE,
-    CONSTRAINT FK_movimiento_ubicacion
-        FOREIGN KEY (id_ubicacion) REFERENCES ubicacion (id_ubicacion)
+    CONSTRAINT FK_MovimientosInventario_Ubicaciones
+        FOREIGN KEY (IdUbicacion) REFERENCES Ubicaciones (IdUbicacion)
         ON DELETE SET NULL,
-    CONSTRAINT FK_movimiento_usuario
-        FOREIGN KEY (id_usuario_registra) REFERENCES usuario (id_usuario)
+    CONSTRAINT FK_MovimientosInventario_Usuarios
+        FOREIGN KEY (IdUsuarioRegistra) REFERENCES Usuarios (IdUsuario)
         ON DELETE SET NULL
 );
 GO
 
-/* Retiro del depósito: préstamo, reparación, inspección o baja.
-   fecha_retorno NULL = el elemento sigue afuera (la baja nunca retorna). */
-CREATE TABLE salida (
-    id_salida               INT IDENTITY(1,1) NOT NULL,
-    id_item                 INT NOT NULL,
-    id_motivo               INT NOT NULL,
-    destino                 NVARCHAR(255) NULL,   -- taller, unidad a la que se presta, etc.
-    fecha_salida            DATETIME2(0) NOT NULL
-        CONSTRAINT DF_salida_fecha DEFAULT SYSDATETIME(),
-    fecha_prevista_retorno  DATE NULL,
-    fecha_retorno           DATETIME2(0) NULL,
-    retirado_por            NVARCHAR(100) NULL,   -- persona física (texto)
-    observaciones           NVARCHAR(500) NULL,
-    CONSTRAINT PK_salida PRIMARY KEY (id_salida),
-    CONSTRAINT FK_salida_item
-        FOREIGN KEY (id_item) REFERENCES inventario_fisico (id_item)
+-- 12. Salidas: retiro del deposito (prestamo/reparacion/inspeccion/baja).
+--     FechaRetornoSalida NULL = el elemento sigue afuera (la baja nunca retorna).
+CREATE TABLE Salidas (
+    IdSalida                   INT IDENTITY(1,1) PRIMARY KEY,
+    IdItem                     INT NOT NULL,
+    IdMotivoSalida             INT NOT NULL,
+    DestinoSalida              NVARCHAR(255) NULL,   -- taller, unidad a la que se presta, etc.
+    FechaSalida                DATETIME2(0) NOT NULL DEFAULT SYSDATETIME(),
+    FechaPrevistaRetornoSalida DATE NULL,
+    FechaRetornoSalida         DATETIME2(0) NULL,
+    RetiradoPorSalida          NVARCHAR(100) NULL,   -- persona fisica (texto)
+    ObservacionesSalida        NVARCHAR(500) NULL,
+    CONSTRAINT FK_Salidas_InventarioFisico
+        FOREIGN KEY (IdItem) REFERENCES InventarioFisico (IdItem)
         ON DELETE CASCADE,
-    CONSTRAINT FK_salida_motivo
-        FOREIGN KEY (id_motivo) REFERENCES motivo_salida (id_motivo),
+    CONSTRAINT FK_Salidas_MotivosSalida
+        FOREIGN KEY (IdMotivoSalida) REFERENCES MotivosSalida (IdMotivoSalida),
     -- P13-A: coherencia de fechas
-    CONSTRAINT CK_salida_retorno_posterior
-        CHECK (fecha_retorno IS NULL OR fecha_retorno >= fecha_salida),
-    CONSTRAINT CK_salida_prevista_posterior
-        CHECK (fecha_prevista_retorno IS NULL OR fecha_prevista_retorno >= CAST(fecha_salida AS DATE))
+    CONSTRAINT CHK_Salidas_RetornoPosterior
+        CHECK (FechaRetornoSalida IS NULL OR FechaRetornoSalida >= FechaSalida),
+    CONSTRAINT CHK_Salidas_PrevistaPosterior
+        CHECK (FechaPrevistaRetornoSalida IS NULL OR FechaPrevistaRetornoSalida >= CAST(FechaSalida AS DATE))
 );
 GO
 
-/* Un elemento no puede tener dos salidas abiertas a la vez (garantía dura) */
-CREATE UNIQUE INDEX UQ_salida_abierta_por_item
-    ON salida (id_item) WHERE fecha_retorno IS NULL;
+-- Integridad dura: un elemento no puede tener dos salidas abiertas a la vez.
+CREATE UNIQUE INDEX UQ_Salidas_AbiertaPorItem
+    ON Salidas (IdItem) WHERE FechaRetornoSalida IS NULL;
 GO
 
-/* ==================== Índices sobre FKs ==================== */
+/* ==================== Indices sobre FKs ==================== */
 
-CREATE INDEX IX_catalogo_tipo        ON catalogo_material (id_tipo_elemento);
-CREATE INDEX IX_catalogo_usuario     ON catalogo_material (id_usuario);
-CREATE INDEX IX_msa_nne              ON material_sist_armas (NNE);
-CREATE INDEX IX_inventario_nne       ON inventario_fisico (NNE);
-CREATE INDEX IX_inventario_ubicacion ON inventario_fisico (id_ubicacion);
-CREATE INDEX IX_tarjeta_item         ON tarjeta (id_item);
-CREATE INDEX IX_tarjeta_estado       ON tarjeta (id_estado);
-CREATE INDEX IX_movimiento_item      ON movimiento_inventario (id_item);
-CREATE INDEX IX_movimiento_fecha     ON movimiento_inventario (fecha_registro);
-CREATE INDEX IX_salida_item          ON salida (id_item);
-CREATE INDEX IX_salida_motivo        ON salida (id_motivo);
+CREATE INDEX IX_CatalogoMateriales_TipoElemento ON CatalogoMateriales (IdTipoElemento);
+CREATE INDEX IX_CatalogoMateriales_Usuario      ON CatalogoMateriales (IdUsuario);
+CREATE INDEX IX_MaterialesSistemasArmas_NNE     ON MaterialesSistemasArmas (NNE);
+CREATE INDEX IX_InventarioFisico_NNE            ON InventarioFisico (NNE);
+CREATE INDEX IX_InventarioFisico_Ubicacion      ON InventarioFisico (IdUbicacion);
+CREATE INDEX IX_Tarjetas_Item                   ON Tarjetas (IdItem);
+CREATE INDEX IX_Tarjetas_Estado                 ON Tarjetas (IdEstadoElemento);
+CREATE INDEX IX_MovimientosInventario_Item      ON MovimientosInventario (IdItem);
+CREATE INDEX IX_MovimientosInventario_Fecha     ON MovimientosInventario (FechaRegistroMovimiento);
+CREATE INDEX IX_Salidas_Item                    ON Salidas (IdItem);
+CREATE INDEX IX_Salidas_Motivo                  ON Salidas (IdMotivoSalida);
 GO
 
-/* ==================== Datos semilla: catálogos fijos ====================
-   estados basados en las tarjetas físicas del taller (I Brigada Aérea — G.T.1) */
+/* ==================== Datos semilla: catalogos fijos ====================
+   estados basados en las tarjetas fisicas del taller (I Brigada Aerea - G.T.1) */
 
-INSERT INTO estado_elemento (codigo, descripcion) VALUES
-    (N'EN_SERVICIO',             N'En servicio — operativo (tarjeta verde)'),
-    (N'EN_SERVICIO_TRANSITORIO', N'En servicio transitorio — pendiente de envío a reparación (tarjeta blanca)'),
-    (N'BAJA',                    N'Baja — elemento fuera de circulación');
+INSERT INTO EstadosElemento (CodigoEstadoElemento, DescripcionEstadoElemento) VALUES
+    ('EN_SERVICIO',             N'En servicio — operativo (tarjeta verde)'),
+    ('EN_SERVICIO_TRANSITORIO', N'En servicio transitorio — pendiente de envio a reparacion (tarjeta blanca)'),
+    ('BAJA',                    N'Baja — elemento fuera de circulacion');
 GO
 
-INSERT INTO motivo_salida (codigo, descripcion) VALUES
-    (N'PRESTAMO',   N'Prestado — retorna al depósito al ser devuelto'),
-    (N'REPARACION', N'Enviado a reparación — retorna al depósito'),
-    (N'INSPECCION', N'Enviado a inspección/verificación — retorna al depósito'),
-    (N'BAJA',       N'Baja definitiva — no retorna al depósito');
+INSERT INTO MotivosSalida (CodigoMotivoSalida, DescripcionMotivoSalida) VALUES
+    ('PRESTAMO',   N'Prestado — retorna al deposito al ser devuelto'),
+    ('REPARACION', N'Enviado a reparacion — retorna al deposito'),
+    ('INSPECCION', N'Enviado a inspeccion/verificacion — retorna al deposito'),
+    ('BAJA',       N'Baja definitiva — no retorna al deposito');
 GO
 
 PRINT '01 - Esquema creado correctamente.';

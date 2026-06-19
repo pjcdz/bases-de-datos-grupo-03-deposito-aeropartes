@@ -10,6 +10,12 @@
 > **Recomendación** (lo que propone el que armó el modelo) y el **Tema de la materia** que
 > ese punto demuestra, para que veamos que estamos cubriendo el programa.
 >
+> 📝 **Nota de nomenclatura:** este documento es de **deliberación** y usa los nombres
+> conceptuales/viejos (`catalogo_material`, `inventario_fisico`, `tarjeta`, `salida`,
+> `movimiento_inventario`…). En el SQL final se adoptó la **convención de cátedra** (PascalCase
+> plural con sufijo de entidad): `CatalogoMateriales`, `InventarioFisico`, `Tarjetas`, `Salidas`,
+> `MovimientosInventario`, etc. Los nombres canónicos están en `DICCIONARIO_DATOS.md` y en los `.sql`.
+>
 > **Contexto del proyecto:** sistema de gestión de material de un depósito de aeropartes
 > (I Brigada Aérea — Taller G.T.1). El modelo ya está en `gestion_material.sql` y el diagrama
 > en `modelo_logico.mermaid`.

@@ -1,110 +1,110 @@
 erDiagram
-    USUARIO {
-        int id_usuario PK
-        string nombre
-        string apellido
-        string rol
+    Usuarios {
+        int IdUsuario PK
+        string NombreUsuario
+        string ApellidoUsuario
+        string RolUsuario
     }
 
-    TIPO_ELEMENTO {
-        int id_tipo PK
-        string nombre
+    TiposElemento {
+        int IdTipoElemento PK
+        string NombreTipoElemento
     }
 
-    SISTEMA_ARMAS {
-        int id_sist_armas PK
-        string codigo
-        string modelo
+    SistemasArmas {
+        int IdSistemaArmas PK
+        string CodigoSistemaArmas
+        string ModeloSistemaArmas
     }
 
-    CATALOGO_MATERIAL {
+    CatalogoMateriales {
         string NNE PK
-        string NREF
-        string designacion
-        string ATA
-        int id_tipo_elemento FK
-        int id_usuario FK
+        string NumeroReferenciaMaterial
+        string DesignacionMaterial
+        string ATAMaterial
+        int IdTipoElemento FK
+        int IdUsuario FK
     }
 
-    MATERIAL_SIST_ARMAS {
-        int id_sist_armas PK, FK
+    MaterialesSistemasArmas {
+        int IdSistemaArmas PK, FK
         string NNE PK, FK
     }
 
-    UBICACION {
-        int id_ubicacion PK
-        string deposito
-        string sector
-        string mapa_highlight
+    Ubicaciones {
+        int IdUbicacion PK
+        string DepositoUbicacion
+        string SectorUbicacion
+        string MapaHighlightUbicacion
     }
 
-    INVENTARIO_FISICO {
-        int id_item PK
+    InventarioFisico {
+        int IdItem PK
         string NNE FK
-        string n_serie
-        date vencimiento
-        string observaciones
-        string tamano
-        int id_ubicacion FK
+        string NumeroSerieItem
+        date FechaVencimientoItem
+        string ObservacionesItem
+        string TamanoItem
+        int IdUbicacion FK
     }
 
-    ESTADO_ELEMENTO {
-        int id_estado PK
-        string codigo
-        string descripcion
+    EstadosElemento {
+        int IdEstadoElemento PK
+        string CodigoEstadoElemento
+        string DescripcionEstadoElemento
     }
 
-    TARJETA {
-        int id_tarjeta PK
-        int id_item FK
-        int id_estado FK
-        string codigo_trazabilidad
-        string nro_tarjeta
-        string ot
-        date fecha_emision
-        string causas
-        string inspector
-        bit activa
+    Tarjetas {
+        int IdTarjeta PK
+        int IdItem FK
+        int IdEstadoElemento FK
+        string CodigoTrazabilidadTarjeta
+        string NumeroTarjeta
+        string OrdenTrabajoTarjeta
+        date FechaEmisionTarjeta
+        string CausasTarjeta
+        string InspectorTarjeta
+        bit ActivaTarjeta
     }
 
-    MOTIVO_SALIDA {
-        int id_motivo PK
-        string codigo
-        string descripcion
+    MotivosSalida {
+        int IdMotivoSalida PK
+        string CodigoMotivoSalida
+        string DescripcionMotivoSalida
     }
 
-    SALIDA {
-        int id_salida PK
-        int id_item FK
-        int id_motivo FK
-        string destino
-        datetime fecha_salida
-        date fecha_prevista_retorno
-        datetime fecha_retorno
-        string retirado_por
-        string observaciones
+    Salidas {
+        int IdSalida PK
+        int IdItem FK
+        int IdMotivoSalida FK
+        string DestinoSalida
+        datetime FechaSalida
+        date FechaPrevistaRetornoSalida
+        datetime FechaRetornoSalida
+        string RetiradoPorSalida
+        string ObservacionesSalida
     }
 
-    MOVIMIENTO_INVENTARIO {
-        int id_movimiento PK
-        int id_item FK
-        int id_ubicacion FK
-        datetime fecha_registro
-        string accion
-        int id_usuario_registra FK
-        string detalle
+    MovimientosInventario {
+        int IdMovimiento PK
+        int IdItem FK
+        int IdUbicacion FK
+        datetime FechaRegistroMovimiento
+        string AccionMovimiento
+        int IdUsuarioRegistra FK
+        string DetalleMovimiento
     }
 
-    TIPO_ELEMENTO ||--o{ CATALOGO_MATERIAL : clasifica
-    USUARIO |o--o{ CATALOGO_MATERIAL : carga
-    SISTEMA_ARMAS ||--o{ MATERIAL_SIST_ARMAS : utiliza
-    CATALOGO_MATERIAL ||--o{ MATERIAL_SIST_ARMAS : compatible
-    CATALOGO_MATERIAL ||--o{ INVENTARIO_FISICO : instancia
-    UBICACION |o--o{ INVENTARIO_FISICO : almacena
-    INVENTARIO_FISICO ||--o{ TARJETA : "lleva atada"
-    ESTADO_ELEMENTO ||--o{ TARJETA : condiciona
-    INVENTARIO_FISICO ||--o{ MOVIMIENTO_INVENTARIO : afecta
-    UBICACION |o--o{ MOVIMIENTO_INVENTARIO : registra
-    USUARIO |o--o{ MOVIMIENTO_INVENTARIO : registra
-    INVENTARIO_FISICO ||--o{ SALIDA : "se retira en"
-    MOTIVO_SALIDA ||--o{ SALIDA : justifica
+    TiposElemento ||--o{ CatalogoMateriales : clasifica
+    Usuarios |o--o{ CatalogoMateriales : carga
+    SistemasArmas ||--o{ MaterialesSistemasArmas : utiliza
+    CatalogoMateriales ||--o{ MaterialesSistemasArmas : compatible
+    CatalogoMateriales ||--o{ InventarioFisico : instancia
+    Ubicaciones |o--o{ InventarioFisico : almacena
+    InventarioFisico ||--o{ Tarjetas : "lleva atada"
+    EstadosElemento ||--o{ Tarjetas : condiciona
+    InventarioFisico ||--o{ MovimientosInventario : afecta
+    Ubicaciones |o--o{ MovimientosInventario : registra
+    Usuarios |o--o{ MovimientosInventario : registra
+    InventarioFisico ||--o{ Salidas : "se retira en"
+    MotivosSalida ||--o{ Salidas : justifica
