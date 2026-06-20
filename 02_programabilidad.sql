@@ -1,5 +1,5 @@
 /* ============================================================================
-   ARCHIVO 02 de 06 — PROGRAMABILIDAD (Transact-SQL)
+   ARCHIVO 02 de 06 - PROGRAMABILIDAD (Transact-SQL)
    Requiere haber ejecutado 01 (gestion_material.sql).
 
    Contenido (temas de la materia que demuestra cada bloque):

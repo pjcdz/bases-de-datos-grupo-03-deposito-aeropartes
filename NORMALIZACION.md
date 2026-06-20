@@ -1,6 +1,6 @@
 # Análisis de Normalización
 
-Sistema de gestión de material — depósito de aeropartes. Se documentan las
+Sistema de gestión de material - depósito de aeropartes. Se documentan las
 **dependencias funcionales (DF)** de cada tabla y se justifica que el modelo
 está en **Tercera Forma Normal (3FN)**.
 
@@ -32,21 +32,21 @@ está en **Tercera Forma Normal (3FN)**.
 
 ## 2. Justificación por forma normal
 
-### 1FN — atomicidad y sin grupos repetidos
+### 1FN - atomicidad y sin grupos repetidos
 - Todos los atributos son atómicos (no hay listas ni valores separados por comas).
 - **Caso clave:** un mismo material puede servir a varios sistemas de armas. En vez de
-  columnas repetidas (`sistema1`, `sistema2`, …) —que violarían 1FN— se resuelve con la tabla
+  columnas repetidas (`sistema1`, `sistema2`, …) -que violarían 1FN- se resuelve con la tabla
   intermedia `MaterialesSistemasArmas`. Cada par (sistema, material) es una fila.
 - Cada tabla tiene clave primaria, por lo tanto no hay filas duplicadas.
 
-### 2FN — sin dependencias parciales
+### 2FN - sin dependencias parciales
 - La única tabla con **clave compuesta** es `MaterialesSistemasArmas`, cuya PK es
   `(IdSistemaArmas, NNE)`. Es una **relación todo-clave**: no tiene atributos no clave, así que
   no puede existir dependencia parcial. Cumple 2FN de forma trivial.
 - El resto de las tablas tiene **clave primaria de un solo atributo**, y según el material *"una
   tabla con clave primaria de un solo atributo no puede exhibir dependencias parciales"*. Cumplen 2FN.
 
-### 3FN — sin dependencias transitivas
+### 3FN - sin dependencias transitivas
 El riesgo de dependencia transitiva aparece cuando se copia en una tabla un dato que en
 realidad pertenece a otra entidad. Se evitó deliberadamente en tres puntos:
 

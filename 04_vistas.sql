@@ -1,5 +1,5 @@
 /* ============================================================================
-   ARCHIVO 04 de 06 — VISTAS
+   ARCHIVO 04 de 06 - VISTAS
    Requiere haber ejecutado 01 y 02 (las vistas usan funciones del archivo 02).
 
    Tema de la materia: Vistas (tablas virtuales), JOINs, abstraccion de consultas.

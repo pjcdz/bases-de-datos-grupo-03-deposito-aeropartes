@@ -1,5 +1,5 @@
 /* ============================================================================
-   ARCHIVO 06 de 06 — CONSULTAS DE DEMOSTRACIÓN
+   ARCHIVO 06 de 06 - CONSULTAS DE DEMOSTRACIÓN
    Requiere 01..05. Pensado para correr consulta por consulta en la defensa.
    Cada bloque demuestra un tema de "SQL Avanzado" de la materia.
    ============================================================================ */

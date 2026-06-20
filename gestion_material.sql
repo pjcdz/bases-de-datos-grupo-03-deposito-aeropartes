@@ -1,6 +1,6 @@
 /* ============================================================================
-   Sistema de Gestion de Material — Microsoft SQL Server (T-SQL)
-   ARCHIVO 01 de 06 — ESQUEMA (DDL): tablas, restricciones, indices y semilla.
+   Sistema de Gestion de Material - Microsoft SQL Server (T-SQL)
+   ARCHIVO 01 de 06 - ESQUEMA (DDL): tablas, restricciones y semilla.
 
    Convencion de escritura (estilo de catedra):
      - Tablas en PascalCase y plural (Usuarios, Salidas...).
@@ -42,7 +42,7 @@
 -- USE GestionMaterial;
 -- GO
 
--- Requerido para indices filtrados y para crear triggers/procedimientos.
+-- Requerido para crear triggers, vistas y procedimientos.
 SET ANSI_NULLS ON;
 SET QUOTED_IDENTIFIER ON;
 GO
@@ -214,11 +214,6 @@ CREATE TABLE Tarjetas (
 );
 GO
 
--- Integridad dura: UNA sola tarjeta activa por elemento (indice unico filtrado).
-CREATE UNIQUE INDEX UQ_Tarjetas_ActivaPorItem
-    ON Tarjetas (IdItem) WHERE ActivaTarjeta = 1;
-GO
-
 -- 11. MovimientosInventario: bitacora de trazabilidad de cada elemento.
 CREATE TABLE MovimientosInventario (
     IdMovimiento            INT IDENTITY(1,1) PRIMARY KEY,
@@ -265,40 +260,20 @@ CREATE TABLE Salidas (
 );
 GO
 
--- Integridad dura: un elemento no puede tener dos salidas abiertas a la vez.
-CREATE UNIQUE INDEX UQ_Salidas_AbiertaPorItem
-    ON Salidas (IdItem) WHERE FechaRetornoSalida IS NULL;
-GO
-
-/* ==================== Indices sobre FKs ==================== */
-
-CREATE INDEX IX_CatalogoMateriales_TipoElemento ON CatalogoMateriales (IdTipoElemento);
-CREATE INDEX IX_CatalogoMateriales_Usuario      ON CatalogoMateriales (IdUsuario);
-CREATE INDEX IX_MaterialesSistemasArmas_NNE     ON MaterialesSistemasArmas (NNE);
-CREATE INDEX IX_InventarioFisico_NNE            ON InventarioFisico (NNE);
-CREATE INDEX IX_InventarioFisico_Ubicacion      ON InventarioFisico (IdUbicacion);
-CREATE INDEX IX_Tarjetas_Item                   ON Tarjetas (IdItem);
-CREATE INDEX IX_Tarjetas_Estado                 ON Tarjetas (IdEstadoElemento);
-CREATE INDEX IX_MovimientosInventario_Item      ON MovimientosInventario (IdItem);
-CREATE INDEX IX_MovimientosInventario_Fecha     ON MovimientosInventario (FechaRegistroMovimiento);
-CREATE INDEX IX_Salidas_Item                    ON Salidas (IdItem);
-CREATE INDEX IX_Salidas_Motivo                  ON Salidas (IdMotivoSalida);
-GO
-
 /* ==================== Datos semilla: catalogos fijos ====================
    estados basados en las tarjetas fisicas del taller (I Brigada Aerea - G.T.1) */
 
 INSERT INTO EstadosElemento (CodigoEstadoElemento, DescripcionEstadoElemento) VALUES
-    ('EN_SERVICIO',             N'En servicio — operativo (tarjeta verde)'),
-    ('EN_SERVICIO_TRANSITORIO', N'En servicio transitorio — pendiente de envio a reparacion (tarjeta blanca)'),
-    ('BAJA',                    N'Baja — elemento fuera de circulacion');
+    ('EN_SERVICIO',             N'En servicio - operativo (tarjeta verde)'),
+    ('EN_SERVICIO_TRANSITORIO', N'En servicio transitorio - pendiente de envio a reparacion (tarjeta blanca)'),
+    ('BAJA',                    N'Baja - elemento fuera de circulacion');
 GO
 
 INSERT INTO MotivosSalida (CodigoMotivoSalida, DescripcionMotivoSalida) VALUES
-    ('PRESTAMO',   N'Prestado — retorna al deposito al ser devuelto'),
-    ('REPARACION', N'Enviado a reparacion — retorna al deposito'),
-    ('INSPECCION', N'Enviado a inspeccion/verificacion — retorna al deposito'),
-    ('BAJA',       N'Baja definitiva — no retorna al deposito');
+    ('PRESTAMO',   N'Prestado - retorna al deposito al ser devuelto'),
+    ('REPARACION', N'Enviado a reparacion - retorna al deposito'),
+    ('INSPECCION', N'Enviado a inspeccion/verificacion - retorna al deposito'),
+    ('BAJA',       N'Baja definitiva - no retorna al deposito');
 GO
 
 PRINT '01 - Esquema creado correctamente.';

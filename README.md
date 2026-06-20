@@ -1,7 +1,7 @@
-# Sistema de Gestión de Material — Depósito de Aeropartes
+# Sistema de Gestión de Material - Depósito de Aeropartes
 
-Proyecto final de Bases de Datos — Grupo 03. Modela el control de material de un
-depósito de aeropartes (I Brigada Aérea — Taller G.T.1): catálogo, inventario
+Proyecto final de Bases de Datos - Grupo 03. Modela el control de material de un
+depósito de aeropartes (I Brigada Aérea - Taller G.T.1): catálogo, inventario
 físico, tarjetas de estado, ubicaciones, salidas/retornos y trazabilidad.
 
 Motor: **Microsoft SQL Server (Transact-SQL)**.
@@ -12,7 +12,7 @@ Ejecutar los scripts **en orden** (cada uno depende del anterior):
 
 | # | Archivo | Contenido |
 |---|---|---|
-| 01 | `gestion_material.sql` | Esquema: tablas, restricciones, índices, datos semilla |
+| 01 | `gestion_material.sql` | Esquema: tablas, restricciones, datos semilla |
 | 02 | `02_programabilidad.sql` | Funciones, triggers, procedimientos de negocio, cursor |
 | 03 | `03_crud.sql` | Procedimientos CRUD (Insert/Read/Update/Delete) por tabla |
 | 04 | `04_vistas.sql` | Vistas |
@@ -21,11 +21,6 @@ Ejecutar los scripts **en orden** (cada uno depende del anterior):
 
 > En SSMS / Azure Data Studio: abrir cada archivo y ejecutar (F5). Para crear una base
 > nueva, descomentar el bloque `CREATE DATABASE` al inicio del archivo 01.
->
-> **Nota:** las tablas `salida` y `tarjeta` usan **índices únicos filtrados**, que exigen
-> `SET QUOTED_IDENTIFIER ON`. Los scripts ya lo activan al inicio. SSMS y Azure Data Studio lo
-> tienen ON por defecto; si se ejecutan sentencias sueltas desde otra herramienta, anteponer
-> `SET QUOTED_IDENTIFIER ON;`.
 
 > **Verificado:** los 6 scripts se probaron de punta a punta sobre el motor de SQL Server
 > (incluye CRUD por tabla, triggers, procedimientos, cursor, vistas, las 11 consultas demo y el
@@ -34,11 +29,11 @@ Ejecutar los scripts **en orden** (cada uno depende del anterior):
 
 ## Documentación
 
-- **`modelo_logico.mermaid`** — diagrama entidad-relación (DER).
-- **`DICCIONARIO_DATOS.md`** — diccionario de datos (una fila por atributo).
-- **`NORMALIZACION.md`** — análisis de dependencias funcionales y prueba de 3FN.
-- **`INFORME_FINAL.md`** — informe final (secciones técnicas + placeholders del equipo).
-- **`DECISIONES_EQUIPO.md`** — decisiones de diseño y preguntas abiertas del equipo.
+- **`modelo_logico.mermaid`** - diagrama entidad-relación (DER).
+- **`DICCIONARIO_DATOS.md`** - diccionario de datos (una fila por atributo).
+- **`NORMALIZACION.md`** - análisis de dependencias funcionales y prueba de 3FN.
+- **`Informe_TP_Grupo3.docx`** - informe final en el formato de la cátedra (documento de entrega).
+- **`DECISIONES_EQUIPO.md`** - decisiones de diseño y preguntas abiertas del equipo.
 
 ## Cobertura de los temas de la materia
 
@@ -50,7 +45,6 @@ Ejecutar los scripts **en orden** (cada uno depende del anterior):
 | Políticas de FK (CASCADE / SET NULL / NO ACTION) | FKs en 01 |
 | Relación N:N con tabla intermedia | `MaterialesSistemasArmas` |
 | Normalización 1FN / 2FN / 3FN + dependencias funcionales | `NORMALIZACION.md` |
-| Índices | índices sobre FKs y únicos filtrados (01) |
 | Funciones escalares | `fn_DiasFueraDeposito`, `fn_EstadoActual`, `fn_DiasParaVencer` (02) |
 | **Triggers** AFTER e INSTEAD OF (INSERTED/DELETED, ROLLBACK) | 4 triggers en 02 |
 | Procedimientos de negocio (parámetros IN/OUT, transacciones, TRY/CATCH) | 5 procedimientos en 02 |

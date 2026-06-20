@@ -1,6 +1,6 @@
 # Diccionario de Datos
 
-Sistema de Gestión de Material — depósito de aeropartes. Motor: Microsoft SQL Server.
+Sistema de Gestión de Material - depósito de aeropartes. Motor: Microsoft SQL Server.
 Una fila por atributo. **Clave:** PK = primaria, FK = foránea, AK = alternativa (UNIQUE).
 
 ---
@@ -139,7 +139,6 @@ Retiro del depósito (préstamo/reparación/inspección/baja) y su retorno.
 
 ---
 
-### Restricciones e índices destacados
-- **UQ_Tarjetas_ActivaPorItem** (índice único filtrado): una sola tarjeta `ActivaTarjeta = 1` por ejemplar.
-- **UQ_Salidas_AbiertaPorItem** (índice único filtrado): una sola salida sin retorno por ejemplar.
+### Restricciones destacadas
 - **CHK_Salidas_RetornoPosterior / CHK_Salidas_PrevistaPosterior**: coherencia de fechas en `Salidas`.
+- Las reglas "una sola tarjeta activa por elemento" y "una sola salida abierta por elemento" se garantizan desde los procedimientos almacenados (`sp_AltaElemento`, `sp_CambiarEstado`, `sp_RegistrarSalida`).

@@ -1,5 +1,5 @@
 /* ============================================================================
-   ARCHIVO 03 de 06 — PROCEDIMIENTOS CRUD POR TABLA
+   ARCHIVO 03 de 06 - PROCEDIMIENTOS CRUD POR TABLA
    Requiere haber ejecutado 01 (gestion_material.sql).
 
    Rubrica 17.b: "al menos dos procedimientos almacenados de CRUD para cada tabla".
@@ -463,7 +463,7 @@ CREATE OR ALTER PROCEDURE sp_Tarjetas_Insert
 AS
 BEGIN
     SET NOCOUNT ON;
-    -- los triggers validan transicion y el indice filtrado garantiza una sola activa
+    -- el trigger valida la transicion de estados (un elemento en BAJA no se reactiva)
     BEGIN TRY
         INSERT INTO Tarjetas (IdItem, IdEstadoElemento, CodigoTrazabilidadTarjeta, NumeroTarjeta, OrdenTrabajoTarjeta, CausasTarjeta, InspectorTarjeta, ActivaTarjeta)
         VALUES (@IdItem, @IdEstadoElemento, @CodigoTrazabilidadTarjeta, @NumeroTarjeta, @OrdenTrabajoTarjeta, @CausasTarjeta, @InspectorTarjeta, @ActivaTarjeta);

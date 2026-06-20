@@ -1,5 +1,5 @@
 /* ============================================================================
-   ARCHIVO 05 de 06 — DATOS DE EJEMPLO
+   ARCHIVO 05 de 06 - DATOS DE EJEMPLO
    Requiere 01, 02, 03 y 04. Carga datos realistas cumpliendo el minimo de la
    rubrica (>=10 filas por tabla; 3-4 en catalogos fijos chicos como EstadosElemento
    y MotivosSalida, que son semilla de 01). Ejercita procedimientos y triggers.
