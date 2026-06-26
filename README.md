@@ -39,6 +39,7 @@ y el script está organizado en seis partes, en orden de dependencia:
 - **`Informe_TP_Grupo3.docx`** - informe final en el formato de la cátedra (documento de entrega).
 - **`DECISIONES_EQUIPO.md`** - decisiones de diseño y preguntas abiertas del equipo.
 - **`GUIA_DEFENSA_SQL.md`** - explicación del script SQL desde cero (conceptos, diagramas ASCII y preguntas típicas) para estudiar y defender.
+- **`RESUMEN_DEFENSA_SQL.md`** - version corta del anterior, pensada para copiar a mano y estudiar.
 
 ## Cobertura de los temas de la materia
 
