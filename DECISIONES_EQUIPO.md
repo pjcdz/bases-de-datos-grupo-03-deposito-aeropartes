@@ -17,8 +17,8 @@
 > `MovimientosInventario`, etc. Los nombres canónicos están en `DICCIONARIO_DATOS.md` y en los `.sql`.
 >
 > **Contexto del proyecto:** sistema de gestión de material de un depósito de aeropartes
-> (I Brigada Aérea - Taller G.T.1). El modelo ya está en `gestion_material.sql` y el diagrama
-> en `modelo_logico.mermaid`.
+> (I Brigada Aérea - Taller G.T.1). El modelo ya está en `script_completo.sql` (Parte 01) y el
+> diagrama en `modelo_logico.mermaid`.
 >
 > **Lo más importante para la nota:** la materia evalúa sobre todo **SQL** (triggers,
 > procedimientos, funciones, cursores, vistas). El diseño de tablas ya está; lo que define la

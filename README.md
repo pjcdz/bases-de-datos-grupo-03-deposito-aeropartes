@@ -6,26 +6,30 @@ físico, tarjetas de estado, ubicaciones, salidas/retornos y trazabilidad.
 
 Motor: **Microsoft SQL Server (Transact-SQL)**.
 
-## Orden de ejecución
+## Ejecución
 
-Ejecutar los scripts **en orden** (cada uno depende del anterior):
+Todo el código SQL está en un único archivo: **`script_completo.sql`**. Ejecutarlo de
+arriba hacia abajo (en SSMS / Azure Data Studio: abrir y F5). Los lotes se separan con `GO`
+y el script está organizado en seis partes, en orden de dependencia:
 
-| # | Archivo | Contenido |
-|---|---|---|
-| 01 | `gestion_material.sql` | Esquema: tablas, restricciones, datos semilla |
-| 02 | `02_programabilidad.sql` | Funciones, triggers, procedimientos de negocio, cursor |
-| 03 | `03_crud.sql` | Procedimientos CRUD (Insert/Read/Update/Delete) por tabla |
-| 04 | `04_vistas.sql` | Vistas |
-| 05 | `05_datos_ejemplo.sql` | Datos de prueba (≥10 filas por tabla, carga vía procedimientos) |
-| 06 | `06_consultas_demostracion.sql` | Consultas de demostración (correr una por una) |
+| Parte | Contenido |
+|---|---|
+| 01 | Esquema: tablas, restricciones, datos de catálogo |
+| 02 | Una función, dos triggers y un procedimiento |
+| 03 | Procedimientos CRUD (Insert y Read) por tabla |
+| 04 | Vistas |
+| 05 | Datos de ejemplo (INSERT directos) |
+| 06 | Consultas de demostración y pruebas |
 
-> En SSMS / Azure Data Studio: abrir cada archivo y ejecutar (F5). Para crear una base
-> nueva, descomentar el bloque `CREATE DATABASE` al inicio del archivo 01.
+> Para crear una base nueva, descomentar el bloque `CREATE DATABASE` al inicio de la Parte 01
+> (o crear la base a mano y ejecutar el script sobre ella).
 
-> **Verificado:** los 6 scripts se probaron de punta a punta sobre el motor de SQL Server
-> (incluye CRUD por tabla, triggers, procedimientos, cursor, vistas, las 11 consultas demo y el
-> rechazo correcto de las operaciones inválidas: doble salida, reactivar baja, borrar estado en
-> uso, motivo inexistente y CHECK de fechas).
+> **Verificado:** el script se ejecutó de punta a punta sobre el motor de SQL Server (Azure SQL
+> Edge), sin errores. Cumple el mínimo pedido por la consigna: 12 tablas en 3FN, 2 procedimientos
+> CRUD por tabla, ≥10 filas por tabla (los catálogos chicos tienen 3-4), 11 consultas, 2 triggers,
+> 2 vistas, 1 función y 1 procedimiento. Las pruebas de validación quedan comentadas al final de la
+> Parte 06 (operaciones inválidas que el motor rechaza: texto en columna numérica, ATA fuera de
+> rango, ATA no numérico, fecha de retorno anterior a la salida y borrar un estado en uso).
 
 ## Documentación
 
@@ -34,28 +38,29 @@ Ejecutar los scripts **en orden** (cada uno depende del anterior):
 - **`NORMALIZACION.md`** - análisis de dependencias funcionales y prueba de 3FN.
 - **`Informe_TP_Grupo3.docx`** - informe final en el formato de la cátedra (documento de entrega).
 - **`DECISIONES_EQUIPO.md`** - decisiones de diseño y preguntas abiertas del equipo.
+- **`GUIA_DEFENSA_SQL.md`** - explicación del script SQL desde cero (conceptos, diagramas ASCII y preguntas típicas) para estudiar y defender.
 
 ## Cobertura de los temas de la materia
 
 | Tema | Dónde se demuestra |
 |---|---|
-| Modelo relacional, claves (PK/FK/alternativas) | esquema completo (01) |
-| Integridad: dominio, entidad, referencial, **transiciones** | CHECK, PK, FK, trigger `trg_tarjeta_no_reactiva_baja` |
-| Restricciones (PK, FK, UNIQUE, NOT NULL, CHECK) | 01 |
-| Políticas de FK (CASCADE / SET NULL / NO ACTION) | FKs en 01 |
+| Modelo relacional, claves (PK/FK/alternativas) | esquema completo (parte 1) |
+| Integridad: dominio, entidad, referencial | CHECK, PK, FK (parte 1) |
+| Restricciones (PK, FK, UNIQUE, NOT NULL, CHECK) | parte 1 (incluye `CHK_CatalogoMateriales_ATA`: numérico 0-99, y CHECK de coherencia de fechas) |
+| Políticas de FK (CASCADE / SET NULL) | FKs en parte 1 |
 | Relación N:N con tabla intermedia | `MaterialesSistemasArmas` |
 | Normalización 1FN / 2FN / 3FN + dependencias funcionales | `NORMALIZACION.md` |
-| Funciones escalares | `fn_DiasFueraDeposito`, `fn_EstadoActual`, `fn_DiasParaVencer` (02) |
-| **Triggers** AFTER e INSTEAD OF (INSERTED/DELETED, ROLLBACK) | 4 triggers en 02 |
-| Procedimientos de negocio (parámetros IN/OUT, transacciones, TRY/CATCH) | 5 procedimientos en 02 |
-| **CRUD por tabla** (Insert/Read/Update/Delete) | `03_crud.sql` (12 tablas) |
-| **Cursor** (DECLARE/OPEN/FETCH/CLOSE/DEALLOCATE) | `sp_ReporteSalidasVencidas` (02) |
-| Vistas | 4 vistas (04) |
-| Datos de prueba (≥10 filas/tabla) | 05 |
-| Operaciones de conjunto (UNION / INTERSECT / EXCEPT) | 06 |
-| Subconsultas (EXISTS / NOT EXISTS / correlacionada) | 06 |
-| GROUP BY / HAVING | 06 |
-| Funciones (CASE, fechas) | 06 |
+| Función escalar | `fn_EstadoActual` (parte 2) |
+| Triggers AFTER e INSTEAD OF | `trg_salida_abre_saca_del_deposito`, `trg_estado_no_borrar` (parte 2) |
+| Procedimiento (parámetros IN/OUT, transacción, TRY/CATCH) | `sp_AltaElemento` (parte 2) |
+| CRUD por tabla (≥2 procedimientos por tabla) | Insert + Read, 12 tablas (parte 3) |
+| Vistas | 2 vistas (parte 4) |
+| Datos de prueba (≥10 filas/tabla) | parte 5 |
+| Operaciones de conjunto (UNION / INTERSECT / EXCEPT) | parte 6 |
+| Subconsultas (EXISTS / NOT EXISTS / correlacionada) | parte 6 |
+| GROUP BY / HAVING | parte 6 |
+| CASE y funciones de fecha | parte 6 |
+| Pruebas de validación (operaciones inválidas que se rechazan) | final de la parte 6 (comentadas) |
 
 ## Modelo en una frase
 
