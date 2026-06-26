@@ -1,9 +1,10 @@
 # Decisiones del proyecto - para completar en equipo
 
-> ⚠️ **ESTADO:** el sistema **ya está implementado y funcionando** con las **recomendaciones por
-> defecto** de cada pregunta (ver `README.md` para correrlo). Esto NO bloquea nada: revisen contra
-> código que ya corre. Si quieren cambiar alguna decisión, marquen otra opción y se ajusta el SQL
-> en el punto puntual. El resumen de lo aplicado está al final de este documento.
+> ⚠️ **ESTADO:** el sistema **ya está implementado y funcionando** en `script_completo.sql` (ver
+> `README.md` para correrlo), con un **alcance reducido** respecto de la "estrategia recomendada" de
+> este documento (que es de deliberación). El detalle de lo que efectivamente se implementó está en
+> **"Alcance finalmente implementado"**, al final de este documento. Si quieren cambiar alguna
+> decisión, marquen otra opción y se ajusta el SQL en el punto puntual.
 
 > **Cómo completar esto:** marcá la opción elegida cambiando `[ ]` por `[x]`. Si ninguna
 > opción te cierra, escribí la tuya en la línea **`Otra:`**. Cada pregunta trae una
@@ -278,3 +279,26 @@ justificación del dominio.
 > **P11:** A · **P12:** A · **P13:** A. Modelo: **P1-C, P2-A, P3-A, P4-A.**
 > Con eso quedan demostrados triggers, procedimientos, funciones, cursores, vistas, transacciones,
 > SQL avanzado y normalización - que es exactamente lo que la materia evalúa.
+
+---
+
+### Alcance finalmente implementado en `script_completo.sql`
+
+> ⚠️ Este documento registra la **deliberación**. El alcance que efectivamente se entregó es más
+> acotado que la "estrategia recomendada" de arriba. Lo que está en el script final es:
+>
+> - **Triggers (2):** `trg_salida_abre_saca_del_deposito` (AFTER INSERT en Salidas) y
+>   `trg_estado_no_borrar` (INSTEAD OF DELETE en EstadosElemento). No se incluyeron
+>   `trg_salida_baja_genera_tarjeta` ni `trg_tarjeta_no_reactiva_baja`.
+> - **Funciones (1):** `fn_EstadoActual`. No se incluyeron `fn_DiasFueraDeposito` ni `fn_DiasParaVencer`.
+> - **Vistas (2):** `vw_stock_disponible` y `vw_historial_tarjetas`. No se incluyeron
+>   `vw_elementos_afuera` ni `vw_elementos_vencidos`.
+> - **Cursor:** ninguno (opción C4 - sin cursor).
+> - **Procedimientos (25):** uno de negocio (`sp_AltaElemento`) y CRUD **solo Insert/Read** para las
+>   12 tablas. No se incluyeron `sp_RegistrarSalida`, `sp_RegistrarRetorno`, `sp_CambiarEstado`,
+>   `sp_ReporteSalidasVencidas`, ni los Update/Delete.
+> - **Restricciones:** PK/FK con políticas (`ON DELETE CASCADE` / `SET NULL`) y CHECK de fechas y
+>   dominio (P13-A) sí están implementados.
+>
+> La regla "una sola tarjeta activa por elemento" no se fuerza por restricción de la base: se
+> mantiene por convención en la lógica de carga (`ActivaTarjeta = 1`).
